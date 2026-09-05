@@ -1,0 +1,26 @@
+build/
+cmake-build-*/
+*.o
+*.a
+*.exe
+*.dll
+*.pdb
+
+# Datasets are big and externally hosted; scripts/fetch_datasets.py pulls them.
+data/
+*.fvecs
+*.ivecs
+*.bvecs
+
+# Index artifacts
+*.vfidx
+*.wal
+*.snapshot
+
+# Go
+/bin/
+vendor/
+
+# Editors
+.vscode/
+.idea/

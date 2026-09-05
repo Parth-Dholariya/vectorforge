@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  core:
+    name: C++ core (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release -j
+
+      # The recall suite is the real test: it builds a graph and checks the
+      # results against exhaustive brute force. A regression in the kernels, the
+      # pruning heuristic, or the link locking shows up here as recall dropping
+      # below the floor rather than as a crash.
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      # The dispatcher must pick a legal kernel on whatever the runner is.
+      # GitHub's hosted runners do have AVX2, so this also confirms the fast
+      # path is actually being exercised in CI rather than silently falling
+      # back to scalar.
+      - name: Report SIMD backend
+        shell: bash
+        run: ./build/test_distance* 2>/dev/null | head -1 || ./build/Release/test_distance.exe | head -1
+
+  smoke:
+    name: Benchmark smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build -j
+      # Small synthetic run so the benchmark binary itself is covered without
+      # pulling the 161 MB SIFT corpus on every push.
+      - run: ./build/bench_recall --synthetic --n 20000 --dim 64 --nq 200 --k 10
