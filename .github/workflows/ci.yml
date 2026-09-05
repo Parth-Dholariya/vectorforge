@@ -28,7 +28,7 @@ jobs:
       # pruning heuristic, or the link locking shows up here as recall dropping
       # below the floor rather than as a crash.
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build -C Release --output-on-failure
 
       # The dispatcher must pick a legal kernel on whatever the runner is.
       # GitHub's hosted runners do have AVX2, so this also confirms the fast
